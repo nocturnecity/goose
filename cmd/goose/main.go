@@ -4,13 +4,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/nocturnecity/goose/v4"
 	"io/fs"
 	"log"
 	"os"
 	"runtime/debug"
 	"text/template"
-
-	"github.com/pressly/goose/v3"
 )
 
 var (
@@ -26,6 +25,8 @@ var (
 	sslcert      = flags.String("ssl-cert", "", "file path to SSL certificates in pem format (only support on mysql)")
 	sslkey       = flags.String("ssl-key", "", "file path to SSL key in pem format (only support on mysql)")
 	noVersioning = flags.Bool("no-versioning", false, "apply migration commands with no versioning, in file order, from directory pointed to")
+	fake         = flags.Bool("fake", false, "apply migrations without changes")
+	unsafe       = flags.Bool("unsafe", false, "apply unsafe migrations")
 )
 var (
 	gooseVersion = ""
@@ -47,6 +48,14 @@ func main() {
 	}
 	if *sequential {
 		goose.SetSequential(true)
+	}
+
+	if *fake {
+		goose.SetFakeApply(true)
+	}
+
+	if *unsafe {
+		goose.AllowUnsafeMigrations(true)
 	}
 	goose.SetTableName(*table)
 
@@ -219,7 +228,7 @@ var sqlMigrationTemplate = template.Must(template.New("goose.sql-migration").Par
 -- This file was automatically created running goose init. If you're familiar with goose
 -- feel free to remove/rename this file, write some SQL and goose up. Briefly,
 -- 
--- Documentation can be found here: https://pressly.github.io/goose
+-- Documentation can be found here: https://random1st.github.io/goose
 --
 -- A single goose .sql file holds both Up and Down migrations.
 -- 

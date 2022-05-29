@@ -6,13 +6,16 @@
 
 Goose is a database migration tool. Manage your database schema by creating incremental SQL changes or Go functions.
 
-Starting with [v3.0.0](https://github.com/pressly/goose/releases/tag/v3.0.0) this project adds Go module support, but maintains backwards compatibility with older `v2.x.y` tags.
+Starting with [v3.0.0](https://github.com/pressly/goose/releases/tag/v3.0.0) this project adds Go module support, but
+maintains backwards compatibility with older `v2.x.y` tags.
 
-Goose supports [embedding SQL migrations](#embedded-sql-migrations), which means you'll need go1.16 and up. If using go1.15 or lower, then pin [v3.0.1](https://github.com/pressly/goose/releases/tag/v3.0.1).
+Goose supports [embedding SQL migrations](#embedded-sql-migrations), which means you'll need go1.16 and up. If using
+go1.15 or lower, then pin [v3.0.1](https://github.com/pressly/goose/releases/tag/v3.0.1).
 
 ### Goals of this fork
 
 `github.com/pressly/goose` is a fork of `bitbucket.org/liamstask/goose` with the following changes:
+
 - No config files
 - [Default goose binary](./cmd/goose/main.go) can migrate SQL files only
 - Go migrations:
@@ -28,9 +31,12 @@ Goose supports [embedding SQL migrations](#embedded-sql-migrations), which means
     - goose pkg doesn't register any SQL drivers anymore,
       thus no driver `panic()` conflict within your codebase!
     - goose pkg doesn't have any vendor dependencies anymore
-- We use timestamped migrations by default but recommend a hybrid approach of using timestamps in the development process and sequential versions in production.
-- Supports missing (out-of-order) migrations with the `-allow-missing` flag, or if using as a library supply the functional option `goose.WithAllowMissing()` to Up, UpTo or UpByOne.
-- Supports applying ad-hoc migrations without tracking them in the schema table. Useful for seeding a database after migrations have been applied. Use `-no-versioning` flag or the functional option `goose.WithNoVersioning()`.
+- We use timestamped migrations by default but recommend a hybrid approach of using timestamps in the development
+  process and sequential versions in production.
+- Supports missing (out-of-order) migrations with the `-allow-missing` flag, or if using as a library supply the
+  functional option `goose.WithAllowMissing()` to Up, UpTo or UpByOne.
+- Supports applying ad-hoc migrations without tracking them in the schema table. Useful for seeding a database after
+  migrations have been applied. Use `-no-versioning` flag or the functional option `goose.WithNoVersioning()`.
 
 # Install
 
@@ -183,7 +189,8 @@ Print the status of all migrations:
 
 Note: for MySQL [parseTime flag](https://github.com/go-sql-driver/mysql#parsetime) must be enabled.
 
-Note: for MySQL [`multiStatements`](https://dev.mysql.com/doc/internals/en/multi-statement.html) must be enabled. This is required when writing multiple queries separated by ';' characters in a single sql file.
+Note: for MySQL [`multiStatements`](https://dev.mysql.com/doc/internals/en/multi-statement.html) must be enabled. This
+is required when writing multiple queries separated by ';' characters in a single sql file.
 
 ## version
 
@@ -213,14 +220,19 @@ CREATE TABLE post (
 DROP TABLE post;
 ```
 
-Notice the annotations in the comments. Any statements following `-- +goose Up` will be executed as part of a forward migration, and any statements following `-- +goose Down` will be executed as part of a rollback.
+Notice the annotations in the comments. Any statements following `-- +goose Up` will be executed as part of a forward
+migration, and any statements following `-- +goose Down` will be executed as part of a rollback.
 
-By default, all migrations are run within a transaction. Some statements like `CREATE DATABASE`, however, cannot be run within a transaction. You may optionally add `-- +goose NO TRANSACTION` to the top of your migration
-file in order to skip transactions within that specific migration file. Both Up and Down migrations within this file will be run without transactions.
+By default, all migrations are run within a transaction. Some statements like `CREATE DATABASE`, however, cannot be run
+within a transaction. You may optionally add `-- +goose NO TRANSACTION` to the top of your migration
+file in order to skip transactions within that specific migration file. Both Up and Down migrations within this file
+will be run without transactions.
 
-By default, SQL statements are delimited by semicolons - in fact, query statements must end with a semicolon to be properly recognized by goose.
+By default, SQL statements are delimited by semicolons - in fact, query statements must end with a semicolon to be
+properly recognized by goose.
 
-More complex statements (PL/pgSQL) that have semicolons within them must be annotated with `-- +goose StatementBegin` and `-- +goose StatementEnd` to be properly recognized. For example:
+More complex statements (PL/pgSQL) that have semicolons within them must be annotated with `-- +goose StatementBegin`
+and `-- +goose StatementEnd` to be properly recognized. For example:
 
 ```sql
 -- +goose Up
@@ -249,6 +261,7 @@ language plpgsql;
 ```
 
 ## Embedded sql migrations
+
 Go 1.16 introduced new feature: [compile-time embedding](https://pkg.go.dev/embed/) files into binary and
 corresponding [filesystem abstraction](https://pkg.go.dev/io/fs/).
 
@@ -341,13 +354,21 @@ DOCKER_BUILDKIT=1  docker build -f Dockerfile.local --output bin .
 ```
 
 # Hybrid Versioning
+
 Please, read the [versioning problem](https://github.com/pressly/goose/issues/63#issuecomment-428681694) first.
 
-By default, if you attempt to apply missing (out-of-order) migrations `goose` will raise an error. However, If you want to apply these missing migrations pass goose the `-allow-missing` flag, or if using as a library supply the functional option `goose.WithAllowMissing()` to Up, UpTo or UpByOne.
+By default, if you attempt to apply missing (out-of-order) migrations `goose` will raise an error. However, If you want
+to apply these missing migrations pass goose the `-allow-missing` flag, or if using as a library supply the functional
+option `goose.WithAllowMissing()` to Up, UpTo or UpByOne.
 
-However, we strongly recommend adopting a hybrid versioning approach, using both timestamps and sequential numbers. Migrations created during the development process are timestamped and sequential versions are ran on production. We believe this method will prevent the problem of conflicting versions when writing software in a team environment.
+However, we strongly recommend adopting a hybrid versioning approach, using both timestamps and sequential numbers.
+Migrations created during the development process are timestamped and sequential versions are ran on production. We
+believe this method will prevent the problem of conflicting versions when writing software in a team environment.
 
-To help you adopt this approach, `create` will use the current timestamp as the migration version. When you're ready to deploy your migrations in a production environment, we also provide a helpful `fix` command to convert your migrations into sequential order, while preserving the timestamp ordering. We recommend running `fix` in the CI pipeline, and only when the migrations are ready for production.
+To help you adopt this approach, `create` will use the current timestamp as the migration version. When you're ready to
+deploy your migrations in a production environment, we also provide a helpful `fix` command to convert your migrations
+into sequential order, while preserving the timestamp ordering. We recommend running `fix` in the CI pipeline, and only
+when the migrations are ready for production.
 
 ## License
 

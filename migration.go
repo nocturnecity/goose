@@ -59,11 +59,15 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 		}
 		defer f.Close()
 
-		statements, useTx, err := parseSQLMigration(f, direction)
+		statements, useTx, unsafe, err := parseSQLMigration(f, direction)
+
 		if err != nil {
 			return errors.Wrapf(err, "ERROR %v: failed to parse SQL migration file", filepath.Base(m.Source))
 		}
 
+		if unsafe && !(unsafeApply || fakeApply) {
+			return errors.Errorf("ERROR %v: unsafe migration was found", filepath.Base(m.Source))
+		}
 		if err := runSQLMigration(db, statements, useTx, m.Version, direction, m.noVersioning); err != nil {
 			return errors.Wrapf(err, "ERROR %v: failed to run SQL migration", filepath.Base(m.Source))
 		}
@@ -76,7 +80,7 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 
 	case ".go":
 		if !m.Registered {
-			return errors.Errorf("ERROR %v: failed to run Go migration: Go functions must be registered and built into a custom binary (see https://github.com/pressly/goose/tree/master/examples/go-migrations)", m.Source)
+			return errors.Errorf("ERROR %v: failed to run Go migration: Go functions must be registered and built into a custom binary (see https://github.com/random1st/goose/tree/master/examples/go-migrations)", m.Source)
 		}
 		tx, err := db.Begin()
 		if err != nil {
