@@ -4,10 +4,10 @@ package main
 
 import (
 	"flag"
+	"github.com/nocturnecity/goose/v4"
 	"log"
 	"os"
 
-	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 )
 
