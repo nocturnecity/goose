@@ -16,6 +16,7 @@ import (
 // All statements following an Up or Down directive are grouped together
 // until another direction directive is found.
 func runSQLMigration(db *sql.DB, statements []string, useTx bool, v int64, direction bool, noVersioning bool) error {
+
 	if useTx {
 		// TRANSACTION.
 
@@ -28,11 +29,16 @@ func runSQLMigration(db *sql.DB, statements []string, useTx bool, v int64, direc
 
 		for _, query := range statements {
 			verboseInfo("Executing statement: %s\n", clearStatement(query))
-			if _, err = tx.Exec(query); err != nil {
-				verboseInfo("Rollback transaction")
-				tx.Rollback()
-				return errors.Wrapf(err, "failed to execute SQL query %q", clearStatement(query))
+			if !fakeApply {
+				if _, err = tx.Exec(query); err != nil {
+					verboseInfo("Rollback transaction")
+					tx.Rollback()
+					return errors.Wrapf(err, "failed to execute SQL query %q", clearStatement(query))
+				}
+			} else {
+				verboseInfo("Skip execution: %s\n", clearStatement(query))
 			}
+
 		}
 
 		if !noVersioning {
@@ -62,8 +68,12 @@ func runSQLMigration(db *sql.DB, statements []string, useTx bool, v int64, direc
 	// NO TRANSACTION.
 	for _, query := range statements {
 		verboseInfo("Executing statement: %s", clearStatement(query))
-		if _, err := db.Exec(query); err != nil {
-			return errors.Wrapf(err, "failed to execute SQL query %q", clearStatement(query))
+		if !fakeApply {
+			if _, err := db.Exec(query); err != nil {
+				return errors.Wrapf(err, "failed to execute SQL query %q", clearStatement(query))
+			}
+		} else {
+			verboseInfo("Skip execution: %s\n", clearStatement(query))
 		}
 	}
 	if !noVersioning {
